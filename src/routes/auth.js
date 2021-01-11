@@ -22,7 +22,6 @@ const login = (req, res) => {
         compare(password, user.password, function (err, result) {
             if (err) return res.status(404).json({ message: "Email or Password is incorrect!" });
             const token = generateAccessToken({ email, id: user.id });
-            res.cookie('token', token, { maxAge: 900000, httpOnly: true });
             return res.json({ user: { name: user.name, email, id: user.id }, token });
         });
     }).catch((error) => {
@@ -36,7 +35,6 @@ const register = (req, res) => {
         if (err) return res.status(400).json({ msg: "Something Error!" });
         connection.promise().query('INSERT INTO users SET ?', { name, email, password }).then(([rows, fields]) => {
             const token = generateAccessToken({ email, id: rows.insertId });
-            res.cookie('token', token, { maxAge: 900000, httpOnly: true });
             return res.json({ user: { name, email, id: rows.insertId }, token });
         }).catch((error) => {
             return res.status(400).json({ message: error.message });
@@ -54,18 +52,10 @@ const me = (req, res) => {
     });
 }
 
-const logout = (_, res) => {
-    res.cookie('token', '', { maxAge: 0, httpOnly: true });
-    return res.json({
-        message: "Logout successfull"
-    })
-}
-
 const router = Router();
 
 router.post('/login', login);
 router.post('/register', register);
 router.get('/me', auth, me);
-router.post('/logout', auth, logout);
 
 export default router;
